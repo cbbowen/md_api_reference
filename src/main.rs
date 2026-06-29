@@ -5,8 +5,11 @@ mod cli;
 mod model;
 mod output;
 mod parse;
+mod reexport;
 mod render;
 mod source;
+
+use std::collections::HashMap;
 
 use anyhow::{Context, Result};
 use clap::Parser;
@@ -23,12 +26,17 @@ fn main() -> Result<()> {
 }
 
 fn run(cli: Cli) -> Result<()> {
+    // Load reference crates once; their reexported items get inlined into each
+    // primary crate so cross-crate `pub use`s are documented.
+    let references = load_references(&cli)?;
+
     // Render every crate first; each contributes its own top-level directory
     // under `--out`. Writing happens once at the end so the empty-directory
     // check sees the original state, not files written for an earlier crate.
     let mut all_files = Vec::new();
     for spec in &cli.crates {
-        let krate = load_crate(spec, &cli)?;
+        let mut krate = load_crate(spec, &cli)?;
+        reexport::inline_reexports(&mut krate, &references);
         let model = DocModel::build(krate);
         let files = render::render(&model);
         println!(
@@ -55,4 +63,17 @@ fn load_crate(spec: &CrateSpec, cli: &Cli) -> Result<Crate> {
     let raw = source::acquire(spec, cli)
         .with_context(|| format!("acquiring rustdoc JSON for {spec:?}"))?;
     parse::parse_crate(&raw.bytes, &raw.origin)
+}
+
+/// Load every `--reexport-crate`, keyed by crate name for cross-crate resolution.
+fn load_references(cli: &Cli) -> Result<HashMap<String, Crate>> {
+    let mut references = HashMap::new();
+    for spec in &cli.reexport_crates {
+        let krate = load_crate(spec, cli)
+            .with_context(|| format!("loading reexport crate {spec:?}"))?;
+        let name = reexport::crate_name(&krate)
+            .with_context(|| format!("reexport crate {spec:?} has no root name"))?;
+        references.insert(name, krate);
+    }
+    Ok(references)
 }
