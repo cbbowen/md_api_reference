@@ -1,0 +1,10 @@
+[package]
+name = "rustdoc_public_md"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rustdoc-types = "0.59.0"
+serde_json = "1.0"
+rustdoc-json = "0.9.10"
+clap = "4.6"
