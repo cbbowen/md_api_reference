@@ -11,6 +11,7 @@ A facade crate that reexports part of `dep`.
 ## Types
 
 - [`Local`](Local.md) — A type that belongs to the facade itself.
+- [`RenamedGizmo`](RenamedGizmo.md) — A gizmo that the facade reexports under a different name.
 - [`Widget`](Widget.md) — A widget defined in `dep`.
 
 ## Functions

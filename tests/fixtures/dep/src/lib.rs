@@ -21,6 +21,9 @@ pub fn helper() -> u32 {
 /// A type that will NOT be reexported by the facade.
 pub struct Unexported;
 
+/// A gizmo that the facade reexports under a different name.
+pub struct Gizmo;
+
 pub mod sub {
     /// A type inside `dep::sub`.
     pub struct Inner;

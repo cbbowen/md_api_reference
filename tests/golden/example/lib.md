@@ -19,6 +19,7 @@ renderer across item kinds.
 - [`Foo`](Foo.md) — A crate-root type.
 - [`Point`](Point.md) — A point with named fields.
 - [`Reexported`](Reexported.md) — Reachable only via the reexport below.
+- [`Renamed`](Renamed.md) — Defined privately, exposed under a different public name.
 
 ## Traits
 

@@ -2,7 +2,7 @@
 
 _Reexported from_ `dep::sub`.
 
-_Defined at_ `src/lib.rs:24`
+_Defined at_ `src/lib.rs:27`
 
 ## Types
 

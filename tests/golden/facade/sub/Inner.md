@@ -2,7 +2,7 @@
 
 _Reexported from_ `dep::sub::Inner`.
 
-_Defined at_ `src/lib.rs:26`
+_Defined at_ `src/lib.rs:29`
 
 A type inside `dep::sub`.
 

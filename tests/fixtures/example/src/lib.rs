@@ -92,9 +92,16 @@ mod private {
 
     /// Never reachable through a public path.
     pub struct Hidden;
+
+    /// Defined privately, exposed under a different public name.
+    pub struct Internal;
 }
 
 pub use private::Reexported;
+
+// Renamed reexport from a private module: documented as `Renamed`, with no
+// origin annotation (it is indistinguishable from a native item).
+pub use private::Internal as Renamed;
 
 mod bulk {
     /// First item exposed via a glob reexport.
