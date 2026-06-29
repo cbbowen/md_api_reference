@@ -20,11 +20,12 @@ pub fn render(ctx: &Ctx, out: &mut String, file: &Path, raw: &Item, heading: &st
     out.push_str(&format!("```rust\n{code}\n```\n\n"));
 
     if let Some(docs) = &raw.docs
-        && !docs.is_empty() {
-            let level = heading.chars().take_while(|&c| c == '#').count();
-            out.push_str(&doc_text::render_docs(docs, level));
-            out.push_str("\n\n");
-        }
+        && !docs.is_empty()
+    {
+        let level = heading.chars().take_while(|&c| c == '#').count();
+        out.push_str(&doc_text::render_docs(docs, level));
+        out.push_str("\n\n");
+    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);

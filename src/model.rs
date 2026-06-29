@@ -166,8 +166,6 @@ pub(crate) mod test_support {
             links: HashMap::new(),
             attrs: Vec::new(),
             deprecation: None,
-            stability: None,
-            const_stability: None,
             inner,
         }
     }

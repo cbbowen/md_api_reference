@@ -29,10 +29,11 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
         out.push_str(&format!("{src}\n\n"));
     }
     if let Some(docs) = &raw.docs
-        && !docs.is_empty() {
-            out.push_str(&doc_text::render_docs(docs, 1));
-            out.push_str("\n\n");
-        }
+        && !docs.is_empty()
+    {
+        out.push_str(&doc_text::render_docs(docs, 1));
+        out.push_str("\n\n");
+    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);

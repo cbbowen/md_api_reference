@@ -154,9 +154,10 @@ fn reexport_section(ctx: &Ctx, out: &mut String, file: &Path, self_path: &[Strin
     for item in ctx.model.items() {
         for alt in &item.alternates {
             if alt.module() == self_path
-                && let Some(link) = ctx.link(file, item.id) {
-                    stubs.push((alt.name().to_string(), link));
-                }
+                && let Some(link) = ctx.link(file, item.id)
+            {
+                stubs.push((alt.name().to_string(), link));
+            }
         }
     }
     if stubs.is_empty() {
@@ -173,10 +174,11 @@ fn reexport_section(ctx: &Ctx, out: &mut String, file: &Path, self_path: &[Strin
 
 fn push_docs(ctx: &Ctx, out: &mut String, file: &Path, raw: &Item) {
     if let Some(docs) = &raw.docs
-        && !docs.is_empty() {
-            out.push_str(&doc_text::render_docs(docs, 1));
-            out.push_str("\n\n");
-        }
+        && !docs.is_empty()
+    {
+        out.push_str(&doc_text::render_docs(docs, 1));
+        out.push_str("\n\n");
+    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);

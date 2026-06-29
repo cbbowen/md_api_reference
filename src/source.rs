@@ -64,10 +64,12 @@ fn acquire_from_docs_rs(spec: &CrateSpec, cli: &Cli) -> Result<RawJson> {
         ),
     };
     let version = version.unwrap_or("latest");
-    let url = format!(
-        "https://docs.rs/crate/{name}/{version}/{target}/json",
-        target = cli.target,
-    );
+    let target_path = if cli.target.is_empty() {
+        "".to_owned()
+    } else {
+        format!("/{}", cli.target)
+    };
+    let url = format!("https://docs.rs/crate/{name}/{version}{target_path}/json",);
 
     let bytes = download_and_decompress(&url)
         .with_context(|| format!("downloading rustdoc JSON for `{name}` from {url}"))?;

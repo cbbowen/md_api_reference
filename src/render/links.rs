@@ -27,11 +27,12 @@ impl Ctx<'_> {
         let target = self.target_file(id)?;
         let mut href = relative_link(from, &target);
         if let Some(item) = self.doc(id)
-            && item.file.is_none() {
-                // Inline items render under a heading slugged from their name.
-                href.push('#');
-                href.push_str(&heading_slug(&item.name));
-            }
+            && item.file.is_none()
+        {
+            // Inline items render under a heading slugged from their name.
+            href.push('#');
+            href.push_str(&heading_slug(&item.name));
+        }
         Some(href)
     }
 

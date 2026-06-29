@@ -4,9 +4,6 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 
-/// Default target triple used for docs.rs JSON downloads.
-pub const DEFAULT_TARGET: &str = "x86_64-unknown-linux-gnu";
-
 /// Generate structured markdown documentation for the public API of Rust crates.
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -47,7 +44,7 @@ pub struct Cli {
     pub manifest_path: Option<PathBuf>,
 
     /// Target triple for docs.rs downloads.
-    #[arg(long, value_name = "TRIPLE", default_value = DEFAULT_TARGET)]
+    #[arg(long, value_name = "TRIPLE", default_value_t)]
     pub target: String,
 }
 

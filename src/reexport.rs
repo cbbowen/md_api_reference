@@ -60,9 +60,9 @@ pub fn inline_reexports(
                 inner: ItemEnum::Use(use_),
                 ..
             }) = primary.index.get_mut(&target.use_item)
-            {
-                use_.id = Some(new_id);
-            }
+        {
+            use_.id = Some(new_id);
+        }
     }
 
     origins
