@@ -222,8 +222,14 @@ mod tests {
         let auto = Cli::parse_from(base);
         assert_eq!(auto.source_mode(), SourceMode::Auto);
 
-        let docs_rs =
-            Cli::parse_from(["prog", "--crate", "serde", "--out", "docs", "--from-docs-rs"]);
+        let docs_rs = Cli::parse_from([
+            "prog",
+            "--crate",
+            "serde",
+            "--out",
+            "docs",
+            "--from-docs-rs",
+        ]);
         assert_eq!(docs_rs.source_mode(), SourceMode::DocsRs);
 
         let local = Cli::parse_from(["prog", "--crate", "serde", "--out", "docs", "--local"]);

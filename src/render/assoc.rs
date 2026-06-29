@@ -19,13 +19,12 @@ pub fn render(ctx: &Ctx, out: &mut String, file: &Path, raw: &Item, heading: &st
     out.push_str(&format!("{heading} `{name}`\n\n"));
     out.push_str(&format!("```rust\n{code}\n```\n\n"));
 
-    if let Some(docs) = &raw.docs {
-        if !docs.is_empty() {
+    if let Some(docs) = &raw.docs
+        && !docs.is_empty() {
             let level = heading.chars().take_while(|&c| c == '#').count();
             out.push_str(&doc_text::render_docs(docs, level));
             out.push_str("\n\n");
         }
-    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);
@@ -37,7 +36,10 @@ fn signature(name: &str, raw: &Item, pub_kw: bool) -> Option<String> {
     match &raw.inner {
         ItemEnum::Function(func) => {
             let prefix = if pub_kw { "pub " } else { "" };
-            Some(format!("{prefix}{}", signature::function_signature(name, func)))
+            Some(format!(
+                "{prefix}{}",
+                signature::function_signature(name, func)
+            ))
         }
         ItemEnum::AssocConst { type_, value } => {
             let mut s = format!("const {name}: {}", signature::type_str(type_));
@@ -46,9 +48,7 @@ fn signature(name: &str, raw: &Item, pub_kw: bool) -> Option<String> {
             }
             Some(s)
         }
-        ItemEnum::AssocType {
-            bounds, type_, ..
-        } => {
+        ItemEnum::AssocType { bounds, type_, .. } => {
             let mut s = format!("type {name}");
             if !bounds.is_empty() {
                 s.push_str(&format!(": {}", signature::bounds_str(bounds)));

@@ -1,4 +1,4 @@
-//! `rustdoc_public_md` — generate structured markdown documentation for the
+//! `md_api_reference` — generate structured markdown documentation for the
 //! public API of Rust crates. See `GOALS.md` for the specification.
 //!
 //! The binary wires these modules into a pipeline; they are exposed as a library

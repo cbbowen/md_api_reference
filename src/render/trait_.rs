@@ -28,12 +28,11 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
     if let Some(src) = ctx.source_ref(raw) {
         out.push_str(&format!("{src}\n\n"));
     }
-    if let Some(docs) = &raw.docs {
-        if !docs.is_empty() {
+    if let Some(docs) = &raw.docs
+        && !docs.is_empty() {
             out.push_str(&doc_text::render_docs(docs, 1));
             out.push_str("\n\n");
         }
-    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);
@@ -42,7 +41,10 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
 
     // Declaration line.
     out.push_str("## Declaration\n\n");
-    out.push_str(&format!("```rust\n{}\n```\n\n", declaration(&item.name, tr)));
+    out.push_str(&format!(
+        "```rust\n{}\n```\n\n",
+        declaration(&item.name, tr)
+    ));
 
     // Associated items, grouped: types, then constants, then methods.
     let mut assoc_types = Vec::new();
@@ -63,7 +65,13 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
 
     assoc_section(ctx, &mut out, file, "Associated Types", &assoc_types);
     assoc_section(ctx, &mut out, file, "Associated Constants", &assoc_consts);
-    assoc_section(ctx, &mut out, file, "Required and Provided Methods", &methods);
+    assoc_section(
+        ctx,
+        &mut out,
+        file,
+        "Required and Provided Methods",
+        &methods,
+    );
 
     implementors(ctx, &mut out, file, raw);
 
@@ -76,7 +84,10 @@ fn declaration(name: &str, tr: &rustdoc_types::Trait) -> String {
     if tr.is_unsafe {
         s.push_str("unsafe ");
     }
-    s.push_str(&format!("trait {name}{}", signature::generics_decl(&tr.generics)));
+    s.push_str(&format!(
+        "trait {name}{}",
+        signature::generics_decl(&tr.generics)
+    ));
     if !tr.bounds.is_empty() {
         s.push_str(&format!(": {}", signature::bounds_str(&tr.bounds)));
     }

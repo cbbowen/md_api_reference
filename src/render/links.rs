@@ -26,13 +26,12 @@ impl Ctx<'_> {
     pub fn link(&self, from: &Path, id: Id) -> Option<String> {
         let target = self.target_file(id)?;
         let mut href = relative_link(from, &target);
-        if let Some(item) = self.doc(id) {
-            if item.file.is_none() {
+        if let Some(item) = self.doc(id)
+            && item.file.is_none() {
                 // Inline items render under a heading slugged from their name.
                 href.push('#');
                 href.push_str(&heading_slug(&item.name));
             }
-        }
         Some(href)
     }
 

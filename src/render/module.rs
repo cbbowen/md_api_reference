@@ -90,9 +90,7 @@ fn link_section(ctx: &Ctx, out: &mut String, file: &Path, title: &str, items: &[
     }
     out.push_str(&format!("## {title}\n\n"));
     for item in items {
-        let link = ctx
-            .link(file, item.id)
-            .unwrap_or_else(|| item.name.clone());
+        let link = ctx.link(file, item.id).unwrap_or_else(|| item.name.clone());
         let desc = item
             .short_desc(ctx)
             .map(|d| format!(" — {d}"))
@@ -109,7 +107,9 @@ fn inline_section(ctx: &Ctx, out: &mut String, file: &Path, title: &str, items: 
     }
     out.push_str(&format!("## {title}\n\n"));
     for item in items {
-        let Some(raw) = ctx.raw(item.id) else { continue };
+        let Some(raw) = ctx.raw(item.id) else {
+            continue;
+        };
         out.push_str(&format!("### `{}`\n\n", item.name));
         if let Some(note) = ctx.reexport_note(item.id) {
             out.push_str(&format!("{note}\n\n"));
@@ -124,13 +124,18 @@ fn inline_section(ctx: &Ctx, out: &mut String, file: &Path, title: &str, items: 
 /// The code-block signature for an inline item.
 fn inline_signature(name: &str, raw: &Item) -> Option<String> {
     match &raw.inner {
-        ItemEnum::Function(func) => Some(format!("pub {}", signature::function_signature(name, func))),
+        ItemEnum::Function(func) => {
+            Some(format!("pub {}", signature::function_signature(name, func)))
+        }
         ItemEnum::Constant { type_, .. } => {
             Some(format!("pub const {name}: {}", signature::type_str(type_)))
         }
         ItemEnum::Static(s) => {
             let m = if s.is_mutable { "mut " } else { "" };
-            Some(format!("pub static {m}{name}: {}", signature::type_str(&s.type_)))
+            Some(format!(
+                "pub static {m}{name}: {}",
+                signature::type_str(&s.type_)
+            ))
         }
         ItemEnum::TypeAlias(alias) => Some(format!(
             "pub type {name}{} = {};",
@@ -148,11 +153,10 @@ fn reexport_section(ctx: &Ctx, out: &mut String, file: &Path, self_path: &[Strin
     let mut stubs: Vec<(String, String)> = Vec::new();
     for item in ctx.model.items() {
         for alt in &item.alternates {
-            if alt.module() == self_path {
-                if let Some(link) = ctx.link(file, item.id) {
+            if alt.module() == self_path
+                && let Some(link) = ctx.link(file, item.id) {
                     stubs.push((alt.name().to_string(), link));
                 }
-            }
         }
     }
     if stubs.is_empty() {
@@ -168,12 +172,11 @@ fn reexport_section(ctx: &Ctx, out: &mut String, file: &Path, self_path: &[Strin
 }
 
 fn push_docs(ctx: &Ctx, out: &mut String, file: &Path, raw: &Item) {
-    if let Some(docs) = &raw.docs {
-        if !docs.is_empty() {
+    if let Some(docs) = &raw.docs
+        && !docs.is_empty() {
             out.push_str(&doc_text::render_docs(docs, 1));
             out.push_str("\n\n");
         }
-    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);

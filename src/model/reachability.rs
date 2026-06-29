@@ -155,8 +155,8 @@ mod tests {
     use crate::model::test_support::*;
 
     /// Collect canonical-ish: the set of full path strings discovered for a name.
-    fn paths_for<'a>(
-        discoveries: &'a BTreeMap<Id, Vec<ItemPath>>,
+    fn paths_for(
+        discoveries: &BTreeMap<Id, Vec<ItemPath>>,
         krate: &Crate,
         name: &str,
     ) -> Vec<String> {

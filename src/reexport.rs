@@ -55,15 +55,14 @@ pub fn inline_reexports(
         };
 
         let mut memo = HashMap::new();
-        if let Some(new_id) = copy_item(primary, src, src_id, &mut memo, &mut next_id, &mut origins) {
-            if let Some(Item {
+        if let Some(new_id) = copy_item(primary, src, src_id, &mut memo, &mut next_id, &mut origins)
+            && let Some(Item {
                 inner: ItemEnum::Use(use_),
                 ..
             }) = primary.index.get_mut(&target.use_item)
             {
                 use_.id = Some(new_id);
             }
-        }
     }
 
     origins
@@ -76,7 +75,10 @@ struct CrossCrateUse {
     path: Vec<String>,
 }
 
-fn collect_cross_crate_uses(primary: &Crate, references: &HashMap<String, Crate>) -> Vec<CrossCrateUse> {
+fn collect_cross_crate_uses(
+    primary: &Crate,
+    references: &HashMap<String, Crate>,
+) -> Vec<CrossCrateUse> {
     let mut out = Vec::new();
     for (id, item) in &primary.index {
         let ItemEnum::Use(use_) = &item.inner else {
@@ -101,7 +103,7 @@ fn collect_cross_crate_uses(primary: &Crate, references: &HashMap<String, Crate>
         }
     }
     // Deterministic processing order.
-    out.sort_by(|a, b| a.use_item.0.cmp(&b.use_item.0));
+    out.sort_by_key(|a| a.use_item.0);
     out
 }
 
@@ -284,7 +286,10 @@ mod tests {
     /// Build a dependency crate `dep` containing `pub struct Widget;` reachable
     /// at path `["dep", "Widget"]`.
     fn dep_crate() -> Crate {
-        let mut dep = krate_with(100, vec![module(100, "dep", &[105]), unit_struct(105, "Widget")]);
+        let mut dep = krate_with(
+            100,
+            vec![module(100, "dep", &[105]), unit_struct(105, "Widget")],
+        );
         dep.paths.insert(
             Id(105),
             ItemSummary {
@@ -299,7 +304,13 @@ mod tests {
     /// Build a facade crate with `pub use dep::Widget;` whose target (id 43) is
     /// external — present only in `paths`/`external_crates`.
     fn facade_crate() -> Crate {
-        let mut facade = krate_with(0, vec![module(0, "facade", &[1]), reexport(1, "Widget", Some(43), false)]);
+        let mut facade = krate_with(
+            0,
+            vec![
+                module(0, "facade", &[1]),
+                reexport(1, "Widget", Some(43), false),
+            ],
+        );
         facade.paths.insert(
             Id(43),
             ItemSummary {

@@ -20,7 +20,13 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
         ItemEnum::Enum(e) => ("Enum", enum_def(ctx, &item.name, e), e.impls.clone()),
         ItemEnum::Union(u) => (
             "Union",
-            union_def(ctx, &item.name, &u.generics, &u.fields, u.has_stripped_fields),
+            union_def(
+                ctx,
+                &item.name,
+                &u.generics,
+                &u.fields,
+                u.has_stripped_fields,
+            ),
             u.impls.clone(),
         ),
         _ => return String::new(),
@@ -36,12 +42,11 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
     if let Some(src) = ctx.source_ref(raw) {
         out.push_str(&format!("{src}\n\n"));
     }
-    if let Some(docs) = &raw.docs {
-        if !docs.is_empty() {
+    if let Some(docs) = &raw.docs
+        && !docs.is_empty() {
             out.push_str(&doc_text::render_docs(docs, 1));
             out.push_str("\n\n");
         }
-    }
     let defs = ctx.intra_doc_definitions(file, raw);
     if !defs.is_empty() {
         out.push_str(&defs);
@@ -73,7 +78,10 @@ fn struct_def(ctx: &Ctx, name: &str, s: &Struct) -> String {
                     None => "/* private */".to_string(),
                 })
                 .collect();
-            format!("pub struct {name}{generics}({}){where_clause};", parts.join(", "))
+            format!(
+                "pub struct {name}{generics}({}){where_clause};",
+                parts.join(", ")
+            )
         }
         StructKind::Plain {
             fields,
@@ -155,7 +163,10 @@ fn named_fields(ctx: &Ctx, fields: &[Id], has_stripped_fields: bool, pub_prefix:
         };
         let Some(fname) = &item.name else { continue };
         push_doc_comment(&mut body, item.docs.as_deref(), "    ");
-        body.push_str(&format!("    {prefix}{fname}: {},\n", signature::type_str(ty)));
+        body.push_str(&format!(
+            "    {prefix}{fname}: {},\n",
+            signature::type_str(ty)
+        ));
     }
     if has_stripped_fields {
         body.push_str("    // some fields omitted\n");

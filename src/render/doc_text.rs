@@ -119,7 +119,10 @@ mod tests {
     #[test]
     fn attributes_in_code_are_kept() {
         let docs = "```\n#[derive(Debug)]\nstruct S;\n```";
-        assert_eq!(render_docs(docs, 1), "```\n#[derive(Debug)]\nstruct S;\n```");
+        assert_eq!(
+            render_docs(docs, 1),
+            "```\n#[derive(Debug)]\nstruct S;\n```"
+        );
     }
 
     #[test]

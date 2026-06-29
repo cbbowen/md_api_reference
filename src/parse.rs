@@ -33,8 +33,7 @@ pub fn parse_crate(bytes: &[u8], origin: &str) -> Result<Crate> {
         );
     }
 
-    serde_json::from_slice(bytes)
-        .with_context(|| format!("parsing rustdoc JSON from {origin}"))
+    serde_json::from_slice(bytes).with_context(|| format!("parsing rustdoc JSON from {origin}"))
 }
 
 #[cfg(test)]
@@ -47,7 +46,10 @@ mod tests {
         let err = parse_crate(json, "test").unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("format_version 1"), "message was: {msg}");
-        assert!(msg.contains(&FORMAT_VERSION.to_string()), "message was: {msg}");
+        assert!(
+            msg.contains(&FORMAT_VERSION.to_string()),
+            "message was: {msg}"
+        );
     }
 
     #[test]

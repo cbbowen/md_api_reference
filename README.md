@@ -1,7 +1,7 @@
-# rustdoc_public_md
+# md_api_reference
 
 > [!IMPORTANT]
-> This is almost 100% vibe-coded slop. It's likely not fit for any purpose, even viewing. Frankly, the implementation challenges were rote and wholly uninteresting. The only non-trivial question was exactly what to output. I created it in the hope that is it could help make future vibe-coded projects modestly less sloppy.
+> This is almost 100% vibe-coded slop. It's likely not fit for any purpose, even viewing. Frankly, the implementation challenges were rote and wholly uninteresting. The only non-trivial question was exactly what to output. I created it in the hope that it could help make future vibe-coded projects modestly less sloppy.
 
 Generate structured **Markdown documentation for the complete public API** of a Rust
 crate — one file per module, type, and trait — primarily so it can be consumed by LLMs
@@ -71,7 +71,7 @@ Build from source:
 
 ```sh
 cargo build --release
-# binary at target/release/rustdoc_public_md
+# binary at target/release/md_api_reference
 ```
 
 Generating JSON from a **local** crate requires a **nightly** toolchain whose rustdoc JSON
@@ -81,7 +81,7 @@ Generating JSON from a **local** crate requires a **nightly** toolchain whose ru
 ## Usage
 
 ```text
-rustdoc_public_md --crate <SPEC> [--crate <SPEC> ...] --out <DIR> [OPTIONS]
+md_api_reference --crate <SPEC> [--crate <SPEC> ...] --out <DIR> [OPTIONS]
 
   --crate <SPEC>           Crate to document: a crate name, `name@version`, or a path
                            to a local crate. Repeatable.
@@ -104,19 +104,19 @@ generated locally. `--from-docs-rs` / `--local` override the detection.
 Download a published crate from docs.rs and document it:
 
 ```sh
-rustdoc_public_md --crate anyhow --out ./docs
+md_api_reference --crate anyhow --out ./docs
 ```
 
 Pin a version:
 
 ```sh
-rustdoc_public_md --crate serde@1.0.219 --out ./docs
+md_api_reference --crate serde@1.0.219 --out ./docs
 ```
 
 Document a local crate:
 
 ```sh
-rustdoc_public_md --crate ./path/to/mycrate --out ./docs
+md_api_reference --crate ./path/to/mycrate --out ./docs
 ```
 
 Document a facade crate together with the dependency it reexports. Items reexported from
@@ -124,7 +124,7 @@ the dependency are documented under the facade and annotated with their original
 (e.g. *Reexported from `dep::Widget`*):
 
 ```sh
-rustdoc_public_md --crate ./facade --reexport-crate ./dep --out ./docs
+md_api_reference --crate ./facade --reexport-crate ./dep --out ./docs
 ```
 
 ## How it works

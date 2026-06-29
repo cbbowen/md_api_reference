@@ -23,7 +23,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rustdoc_public_md::{generate, generate_with_origins, parse::parse_crate, reexport};
+use md_api_reference::{generate, generate_with_origins, parse::parse_crate, reexport};
 
 fn manifest_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -47,22 +47,26 @@ fn render_all() -> BTreeMap<PathBuf, String> {
     files
 }
 
-fn insert(into: &mut BTreeMap<PathBuf, String>, files: Vec<rustdoc_public_md::render::RenderedFile>) {
+fn insert(
+    into: &mut BTreeMap<PathBuf, String>,
+    files: Vec<md_api_reference::render::RenderedFile>,
+) {
     for f in files {
         into.insert(f.path, normalize(&f.contents));
     }
 }
 
 /// The single-crate `example` fixture.
-fn render_single() -> Vec<rustdoc_public_md::render::RenderedFile> {
+fn render_single() -> Vec<md_api_reference::render::RenderedFile> {
     let krate = parse_crate(&fixture_bytes("example.json"), "example.json").expect("parse example");
     generate(krate)
 }
 
 /// The cross-crate case: `--crate facade --reexport-crate dep`. Mirrors the
 /// pipeline's inlining of reexported items before rendering.
-fn render_facade() -> Vec<rustdoc_public_md::render::RenderedFile> {
-    let mut facade = parse_crate(&fixture_bytes("facade.json"), "facade.json").expect("parse facade");
+fn render_facade() -> Vec<md_api_reference::render::RenderedFile> {
+    let mut facade =
+        parse_crate(&fixture_bytes("facade.json"), "facade.json").expect("parse facade");
     let dep = parse_crate(&fixture_bytes("dep.json"), "dep.json").expect("parse dep");
 
     let name = reexport::crate_name(&dep).expect("dep crate name");
@@ -115,7 +119,10 @@ fn golden_matches() {
     for golden in walk(&golden_root()) {
         let rel = golden.strip_prefix(golden_root()).unwrap().to_path_buf();
         if !rendered.contains_key(&rel) {
-            problems.push(format!("stale golden file with no rendered counterpart: {}", rel.display()));
+            problems.push(format!(
+                "stale golden file with no rendered counterpart: {}",
+                rel.display()
+            ));
         }
     }
 
@@ -139,14 +146,21 @@ fn bless(rendered: &BTreeMap<PathBuf, String>) {
         }
         fs::write(&path, contents).expect("write golden file");
     }
-    eprintln!("blessed {} golden files under {}", rendered.len(), root.display());
+    eprintln!(
+        "blessed {} golden files under {}",
+        rendered.len(),
+        root.display()
+    );
 }
 
 /// A human-readable description of the first line that differs.
 fn first_difference(expected: &str, actual: &str) -> String {
     for (i, (e, a)) in expected.lines().zip(actual.lines()).enumerate() {
         if e != a {
-            return format!("  line {}:\n  - expected: {e:?}\n  - actual:   {a:?}", i + 1);
+            return format!(
+                "  line {}:\n  - expected: {e:?}\n  - actual:   {a:?}",
+                i + 1
+            );
         }
     }
     let (el, al) = (expected.lines().count(), actual.lines().count());

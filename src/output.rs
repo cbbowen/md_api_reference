@@ -22,8 +22,7 @@ pub fn write_all(out: &Path, files: &[RenderedFile]) -> Result<()> {
             fs::create_dir_all(parent)
                 .with_context(|| format!("creating directory {}", parent.display()))?;
         }
-        fs::write(&full, &file.contents)
-            .with_context(|| format!("writing {}", full.display()))?;
+        fs::write(&full, &file.contents).with_context(|| format!("writing {}", full.display()))?;
     }
 
     Ok(())
@@ -43,10 +42,8 @@ fn prepare_out_dir(out: &Path) -> Result<()> {
             }
             Ok(())
         }
-        Err(err) if err.kind() == std::io::ErrorKind::NotFound => {
-            fs::create_dir_all(out)
-                .with_context(|| format!("creating output directory {}", out.display()))
-        }
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => fs::create_dir_all(out)
+            .with_context(|| format!("creating output directory {}", out.display())),
         Err(err) => {
             Err(err).with_context(|| format!("inspecting output directory {}", out.display()))
         }
@@ -85,8 +82,14 @@ mod tests {
 
         write_all(&dir, &files).unwrap();
 
-        assert_eq!(fs::read_to_string(dir.join("example/lib.md")).unwrap(), "# Crate");
-        assert_eq!(fs::read_to_string(dir.join("example/top/Bar.md")).unwrap(), "# Bar");
+        assert_eq!(
+            fs::read_to_string(dir.join("example/lib.md")).unwrap(),
+            "# Crate"
+        );
+        assert_eq!(
+            fs::read_to_string(dir.join("example/top/Bar.md")).unwrap(),
+            "# Bar"
+        );
 
         fs::remove_dir_all(&dir).ok();
     }
@@ -109,7 +112,10 @@ mod tests {
         let err = write_all(&dir, &[rendered("a.md", "x")]).unwrap_err();
         assert!(err.to_string().contains("not empty"), "got: {err}");
         // The pre-existing file is untouched.
-        assert_eq!(fs::read_to_string(dir.join("preexisting.txt")).unwrap(), "keep me");
+        assert_eq!(
+            fs::read_to_string(dir.join("preexisting.txt")).unwrap(),
+            "keep me"
+        );
 
         fs::remove_dir_all(&dir).ok();
     }

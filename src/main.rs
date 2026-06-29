@@ -3,9 +3,9 @@
 use anyhow::Result;
 use clap::Parser;
 
-use rustdoc_public_md::cli::Cli;
+use md_api_reference::cli::Cli;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    rustdoc_public_md::run(cli)
+    md_api_reference::run(cli)
 }

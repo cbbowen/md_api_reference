@@ -287,6 +287,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
+name = "md_api_reference"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "rustdoc-json",
+ "rustdoc-types",
+ "ruzstd",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
 name = "memchr"
 version = "2.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -380,20 +394,6 @@ checksum = "b3e25ff539c83e47de65a6a790446186286d3a64bfadc780ed557cc3410d9509"
 dependencies = [
  "serde",
  "serde_derive",
-]
-
-[[package]]
-name = "rustdoc_public_md"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "rustdoc-json",
- "rustdoc-types",
- "ruzstd",
- "serde",
- "serde_json",
- "ureq",
 ]
 
 [[package]]

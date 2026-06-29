@@ -1,5 +1,5 @@
 [package]
-name = "rustdoc_public_md"
+name = "md_api_reference"
 version = "0.1.0"
 edition = "2024"
 
