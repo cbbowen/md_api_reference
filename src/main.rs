@@ -4,6 +4,7 @@
 mod cli;
 mod model;
 mod parse;
+mod render;
 mod source;
 
 use anyhow::{Context, Result};
@@ -25,7 +26,8 @@ fn run(cli: Cli) -> Result<()> {
     for spec in &cli.crates {
         let krate = load_crate(spec, &cli)?;
         let model = DocModel::build(krate);
-        report(spec, &model);
+        let files = render::render(&model);
+        report(spec, &model, &files);
     }
 
     Ok(())
@@ -38,29 +40,17 @@ fn load_crate(spec: &CrateSpec, cli: &Cli) -> Result<Crate> {
     parse::parse_crate(&raw.bytes, &raw.origin)
 }
 
-fn report(spec: &CrateSpec, model: &DocModel) {
+fn report(spec: &CrateSpec, model: &DocModel, files: &[render::RenderedFile]) {
     println!(
-        "{spec:?}: {} documented items ({} in raw index)",
+        "{spec:?}: {} documented items, {} files rendered ({} raw index entries)",
         model.items.len(),
+        files.len(),
         model.krate.index.len(),
     );
-    for item in model.items() {
-        let canonical = item.canonical.0.join("::");
-        let file = item
-            .file
-            .as_ref()
-            .map(|f| f.to_string_lossy().replace('\\', "/"))
-            .unwrap_or_else(|| "(inline)".to_string());
-        let alts = if item.alternates.is_empty() {
-            String::new()
-        } else {
-            let list: Vec<String> = item
-                .alternates
-                .iter()
-                .map(|p| p.0.join("::"))
-                .collect();
-            format!("  [also: {}]", list.join(", "))
-        };
-        println!("  {canonical}  →  {file}{alts}");
+    // Temporary Phase 3 preview: dump each rendered file. Phase 4 writes to disk.
+    for file in files {
+        let path = file.path.to_string_lossy().replace('\\', "/");
+        println!("\n===== {path} =====");
+        println!("{}", file.contents);
     }
 }
