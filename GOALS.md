@@ -47,7 +47,7 @@ Every item's own documentation comment (`///` / `//!`) is rendered as markdown i
 * Embedded headings (e.g. `# Examples`) are shifted down so they nest beneath the file's own heading structure.
 * Hidden doctest lines (those beginning with `# ` inside a code block) are stripped.
 
-All markdown files include a single crate-relative source code link to the location where the item is defined. For modules using the `mod name;` form this is a file link without a line number; for the `mod name { ... }` form and for all other items it includes a line number.
+All markdown files include a single crate-relative source reference to the location where the item is defined, rendered as plain inline code (e.g. `` _Defined at_ `src/lib.rs:6` ``) rather than a hyperlink, since the source files are not part of the output tree. Path separators are normalized to `/`. For modules using the `mod name;` form the reference omits the line number; for the `mod name { ... }` form and for all other items it includes a line number.
 
 ### Ordering
 
@@ -92,7 +92,7 @@ pub use private::Foo;
 
 Documentation is generated for `Foo` but not for `Bar`.
 
-`#[doc(hidden)]` on an item indicates that it should be ignored regardless of whether it is publicly accessible.
+`#[doc(hidden)]` on an item indicates that it should be ignored regardless of whether it is publicly accessible. (In practice rustdoc already strips `#[doc(hidden)]` items from the JSON, so no explicit filtering is required — but reexports of such items are still excluded.)
 
 ### Items reachable via multiple paths
 
@@ -115,7 +115,7 @@ Unlike private-module reexports, an item reexported from another crate **is** di
 ### Source selection
 
 The JSON for each crate is obtained one of two ways, selected automatically with explicit overrides available:
-* **Download from docs.rs.** Used when a crate is named (optionally `name@version`). The URL structure is `https://docs.rs/crate/{crate}/{version}/{target}/json`, defaulting `version` to `latest` and `target` to `x86_64-unknown-linux-gnu`. A `user-agent` header *must* be provided.
+* **Download from docs.rs.** Used when a crate is named (optionally `name@version`). The URL structure is `https://docs.rs/crate/{crate}/{version}/{target}/json`, defaulting `version` to `latest` and `target` to `x86_64-unknown-linux-gnu`. A `user-agent` header *must* be provided. The response is zstd-compressed (`application/zstd`) and is decompressed before parsing.
 * **Generate locally** via the `rustdoc-json` crate. Used when a path-like value or `--manifest-path` is supplied. The source may be a local crate path or Cargo's cache.
 
 Explicit flags (`--from-docs-rs` / `--local`) override the auto-detection.
