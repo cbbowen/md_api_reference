@@ -24,3 +24,7 @@ mod private {
 }
 
 pub use private::Reexported;
+
+/// Public but hidden from docs.
+#[doc(hidden)]
+pub struct HiddenButPublic;

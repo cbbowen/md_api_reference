@@ -2,6 +2,7 @@
 //! public API of Rust crates. See `GOALS.md` for the specification.
 
 mod cli;
+mod model;
 mod parse;
 mod source;
 
@@ -10,6 +11,7 @@ use clap::Parser;
 use rustdoc_types::Crate;
 
 use crate::cli::{Cli, CrateSpec};
+use crate::model::DocModel;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -22,12 +24,8 @@ fn main() -> Result<()> {
 fn run(cli: Cli) -> Result<()> {
     for spec in &cli.crates {
         let krate = load_crate(spec, &cli)?;
-        report(spec, &krate);
-    }
-
-    for spec in &cli.reexport_crates {
-        let krate = load_crate(spec, &cli)?;
-        report(spec, &krate);
+        let model = DocModel::build(krate);
+        report(spec, &model);
     }
 
     Ok(())
@@ -40,15 +38,29 @@ fn load_crate(spec: &CrateSpec, cli: &Cli) -> Result<Crate> {
     parse::parse_crate(&raw.bytes, &raw.origin)
 }
 
-fn report(spec: &CrateSpec, krate: &Crate) {
-    let root_name = krate
-        .index
-        .get(&krate.root)
-        .and_then(|item| item.name.as_deref())
-        .unwrap_or("<unknown>");
+fn report(spec: &CrateSpec, model: &DocModel) {
     println!(
-        "{spec:?}: root `{root_name}`, {} items in index, format_version {}",
-        krate.index.len(),
-        krate.format_version,
+        "{spec:?}: {} documented items ({} in raw index)",
+        model.items.len(),
+        model.krate.index.len(),
     );
+    for item in model.items() {
+        let canonical = item.canonical.0.join("::");
+        let file = item
+            .file
+            .as_ref()
+            .map(|f| f.to_string_lossy().replace('\\', "/"))
+            .unwrap_or_else(|| "(inline)".to_string());
+        let alts = if item.alternates.is_empty() {
+            String::new()
+        } else {
+            let list: Vec<String> = item
+                .alternates
+                .iter()
+                .map(|p| p.0.join("::"))
+                .collect();
+            format!("  [also: {}]", list.join(", "))
+        };
+        println!("  {canonical}  →  {file}{alts}");
+    }
 }
