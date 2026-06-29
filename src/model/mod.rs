@@ -8,7 +8,7 @@
 mod paths;
 mod reachability;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 
 use rustdoc_types::{Crate, Id, ItemEnum};
@@ -95,6 +95,22 @@ pub struct DocItem {
     pub file: Option<PathBuf>,
 }
 
+/// Where an item was originally defined, when it was reexported into this crate
+/// from an external dependency (a `--reexport-crate`). Reexports from a private
+/// module of the *same* crate are documented as native and have no origin.
+#[derive(Debug, Clone)]
+pub struct ReexportOrigin {
+    /// Full path in the originating dependency, e.g. `["dep", "Widget"]`.
+    pub path: Vec<String>,
+}
+
+impl ReexportOrigin {
+    /// The `dep::module::Item` display form.
+    pub fn display(&self) -> String {
+        self.path.join("::")
+    }
+}
+
 /// The complete model for one crate.
 pub struct DocModel {
     pub krate: Crate,
@@ -103,6 +119,9 @@ pub struct DocModel {
     pub root: Id,
     /// Documented items keyed by id, in a deterministic order.
     pub items: BTreeMap<Id, DocItem>,
+    /// Origins of items inlined from external `--reexport-crate`s, keyed by the
+    /// (inlined) item id. Empty when there are no cross-crate reexports.
+    pub origins: HashMap<Id, ReexportOrigin>,
 }
 
 impl DocModel {
@@ -112,7 +131,12 @@ impl DocModel {
         let discoveries = reachability::discover(&krate);
         let items = paths::assemble(&krate, discoveries);
         let root = krate.root;
-        DocModel { krate, root, items }
+        DocModel {
+            krate,
+            root,
+            items,
+            origins: HashMap::new(),
+        }
     }
 
     /// Documented items in deterministic order.

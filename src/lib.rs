@@ -15,16 +15,27 @@ pub mod source;
 use std::collections::HashMap;
 
 use anyhow::{Context, Result};
-use rustdoc_types::Crate;
+use rustdoc_types::{Crate, Id};
 
 use crate::cli::{Cli, CrateSpec};
-use crate::model::DocModel;
+use crate::model::{DocModel, ReexportOrigin};
 use crate::render::RenderedFile;
 
 /// Render the markdown files for one parsed crate. This is the pure
 /// model → render core, with no I/O, used by both the binary and golden tests.
 pub fn generate(krate: Crate) -> Vec<RenderedFile> {
-    render::render(&DocModel::build(krate))
+    generate_with_origins(krate, HashMap::new())
+}
+
+/// Like [`generate`], but with reexport origins (from [`reexport::inline_reexports`])
+/// so items inlined from an external dependency are annotated with their source.
+pub fn generate_with_origins(
+    krate: Crate,
+    origins: HashMap<Id, ReexportOrigin>,
+) -> Vec<RenderedFile> {
+    let mut model = DocModel::build(krate);
+    model.origins = origins;
+    render::render(&model)
 }
 
 /// Run the full documentation pipeline: acquire and parse each crate, inline
@@ -40,8 +51,8 @@ pub fn run(cli: Cli) -> Result<()> {
     let mut all_files = Vec::new();
     for spec in &cli.crates {
         let mut krate = load_crate(spec, &cli)?;
-        reexport::inline_reexports(&mut krate, &references);
-        let files = generate(krate);
+        let origins = reexport::inline_reexports(&mut krate, &references);
+        let files = generate_with_origins(krate, origins);
         println!("{spec:?}: {} files", files.len());
         all_files.extend(files);
     }

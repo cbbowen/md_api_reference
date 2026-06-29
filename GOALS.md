@@ -102,11 +102,13 @@ An item may be reachable via more than one public path (e.g. defined in a privat
 
 ### From private modules
 
-These are documented *as if they were public items*. From the perspective of users of the crate, such an item is indistinguishable from a public item defined where it is reexported.
+These are documented *as if they were public items*. From the perspective of users of the crate, such an item is indistinguishable from a public item defined where it is reexported, so it carries **no** origin annotation.
 
 ### From other crates
 
 In addition to `--crate`, zero or more `--reexport-crate` arguments may be specified. The tool also runs `rustdoc` on these. However, markdown files are only produced for items that are publicly reexported from one of the crates specified by `--crate` (following the same canonical-location rules above). This is intended for crates that reexport all or part of one of their dependencies.
+
+Unlike private-module reexports, an item reexported from another crate **is** distinguishable to users: they may also depend on that dependency directly and reach the same item by its original path. To make this visible, each such item is annotated with a `_Reexported from_ `dep::module::Item`.` line (the path in the originating dependency). This applies to the reexported item and, for a reexported module, to each item it brings in.
 
 ## Rustdoc JSON
 

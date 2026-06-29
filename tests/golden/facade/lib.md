@@ -17,6 +17,8 @@ A facade crate that reexports part of `dep`.
 
 ### `helper`
 
+_Reexported from_ `dep::helper`.
+
 ```rust
 pub fn helper() -> u32
 ```

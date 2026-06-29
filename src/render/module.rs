@@ -24,6 +24,10 @@ pub fn render(ctx: &Ctx, module: &DocItem) -> String {
         out.push_str(&format!("# Module `{path}`\n\n"));
     }
 
+    if let Some(note) = ctx.reexport_note(module.id) {
+        out.push_str(&format!("{note}\n\n"));
+    }
+
     // Source reference and docs.
     if let Some(raw) = raw {
         if let Some(src) = ctx.source_ref(raw) {
@@ -107,6 +111,9 @@ fn inline_section(ctx: &Ctx, out: &mut String, file: &Path, title: &str, items: 
     for item in items {
         let Some(raw) = ctx.raw(item.id) else { continue };
         out.push_str(&format!("### `{}`\n\n", item.name));
+        if let Some(note) = ctx.reexport_note(item.id) {
+            out.push_str(&format!("{note}\n\n"));
+        }
         if let Some(code) = inline_signature(&item.name, raw) {
             out.push_str(&format!("```rust\n{code}\n```\n\n"));
         }

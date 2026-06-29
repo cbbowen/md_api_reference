@@ -23,7 +23,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use rustdoc_public_md::{generate, parse::parse_crate, reexport};
+use rustdoc_public_md::{generate, generate_with_origins, parse::parse_crate, reexport};
 
 fn manifest_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -69,8 +69,8 @@ fn render_facade() -> Vec<rustdoc_public_md::render::RenderedFile> {
     let mut references = HashMap::new();
     references.insert(name, dep);
 
-    reexport::inline_reexports(&mut facade, &references);
-    generate(facade)
+    let origins = reexport::inline_reexports(&mut facade, &references);
+    generate_with_origins(facade, origins)
 }
 
 /// Normalize line endings so the comparison is stable across platforms / git

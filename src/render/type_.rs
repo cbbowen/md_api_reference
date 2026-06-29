@@ -30,6 +30,9 @@ pub fn render(ctx: &Ctx, item: &DocItem) -> String {
     let path = item.canonical.0.join("::");
     out.push_str(&format!("# {keyword} `{path}`\n\n"));
 
+    if let Some(note) = ctx.reexport_note(item.id) {
+        out.push_str(&format!("{note}\n\n"));
+    }
     if let Some(src) = ctx.source_ref(raw) {
         out.push_str(&format!("{src}\n\n"));
     }

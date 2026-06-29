@@ -1,5 +1,7 @@
 # Struct `facade::Widget`
 
+_Reexported from_ `dep::Widget`.
+
 _Defined at_ `src/lib.rs:4`
 
 A widget defined in `dep`.

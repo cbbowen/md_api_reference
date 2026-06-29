@@ -13,16 +13,23 @@ use std::collections::HashMap;
 
 use rustdoc_types::{Crate, Id, Item, ItemEnum, StructKind, VariantKind};
 
+use crate::model::ReexportOrigin;
+
 /// The crate name of a parsed crate (its root module's name).
 pub fn crate_name(krate: &Crate) -> Option<String> {
     krate.index.get(&krate.root)?.name.clone()
 }
 
 /// Inline every cross-crate reexport in `primary` that targets one of the named
-/// `references` crates.
-pub fn inline_reexports(primary: &mut Crate, references: &HashMap<String, Crate>) {
+/// `references` crates. Returns the origin (dependency-side path) of every
+/// inlined item that is itself addressable, so the renderer can annotate it.
+pub fn inline_reexports(
+    primary: &mut Crate,
+    references: &HashMap<String, Crate>,
+) -> HashMap<Id, ReexportOrigin> {
+    let mut origins = HashMap::new();
     if references.is_empty() {
-        return;
+        return origins;
     }
 
     // path → id lookups for each reference crate, so an external path from the
@@ -48,7 +55,7 @@ pub fn inline_reexports(primary: &mut Crate, references: &HashMap<String, Crate>
         };
 
         let mut memo = HashMap::new();
-        if let Some(new_id) = copy_item(primary, src, src_id, &mut memo, &mut next_id) {
+        if let Some(new_id) = copy_item(primary, src, src_id, &mut memo, &mut next_id, &mut origins) {
             if let Some(Item {
                 inner: ItemEnum::Use(use_),
                 ..
@@ -58,6 +65,8 @@ pub fn inline_reexports(primary: &mut Crate, references: &HashMap<String, Crate>
             }
         }
     }
+
+    origins
 }
 
 /// A `use` in the primary crate whose target lives in a reference crate.
@@ -112,13 +121,15 @@ fn next_free_id(krate: &Crate) -> u32 {
 
 /// Recursively copy `src_id`'s subgraph from `src` into `target`, returning the
 /// new id. Containment references (module items, fields, variants, impls, …) are
-/// followed and remapped; type/path references are left as-is.
+/// followed and remapped; type/path references are left as-is. Items that are
+/// addressable in `src` (have a `paths` entry) get an origin recorded.
 fn copy_item(
     target: &mut Crate,
     src: &Crate,
     src_id: Id,
     memo: &mut HashMap<Id, Id>,
     next_id: &mut u32,
+    origins: &mut HashMap<Id, ReexportOrigin>,
 ) -> Option<Id> {
     if let Some(&existing) = memo.get(&src_id) {
         return Some(existing);
@@ -130,7 +141,18 @@ fn copy_item(
     // Insert into the memo before recursing so cycles terminate.
     memo.insert(src_id, new_id);
 
-    let inner = remap_inner(item.inner.clone(), target, src, memo, next_id);
+    // Record the dependency-side path for addressable items, so the renderer can
+    // show "Reexported from `dep::…`".
+    if let Some(summary) = src.paths.get(&src_id) {
+        origins.insert(
+            new_id,
+            ReexportOrigin {
+                path: summary.path.clone(),
+            },
+        );
+    }
+
+    let inner = remap_inner(item.inner.clone(), target, src, memo, next_id, origins);
     let new_item = Item {
         id: new_id,
         inner,
@@ -146,44 +168,49 @@ fn remap_inner(
     src: &Crate,
     memo: &mut HashMap<Id, Id>,
     next_id: &mut u32,
+    origins: &mut HashMap<Id, ReexportOrigin>,
 ) -> ItemEnum {
-    let copy = |ids: &[Id], target: &mut Crate, memo: &mut HashMap<Id, Id>, next: &mut u32| {
+    let copy = |ids: &[Id],
+                target: &mut Crate,
+                memo: &mut HashMap<Id, Id>,
+                next: &mut u32,
+                origins: &mut HashMap<Id, ReexportOrigin>| {
         ids.iter()
-            .filter_map(|&id| copy_item(target, src, id, memo, next))
+            .filter_map(|&id| copy_item(target, src, id, memo, next, origins))
             .collect::<Vec<_>>()
     };
 
     match inner {
         ItemEnum::Module(mut m) => {
-            m.items = copy(&m.items, target, memo, next_id);
+            m.items = copy(&m.items, target, memo, next_id, origins);
             ItemEnum::Module(m)
         }
         ItemEnum::Struct(mut s) => {
-            s.kind = remap_struct_kind(s.kind, target, src, memo, next_id);
-            s.impls = copy(&s.impls, target, memo, next_id);
+            s.kind = remap_struct_kind(s.kind, target, src, memo, next_id, origins);
+            s.impls = copy(&s.impls, target, memo, next_id, origins);
             ItemEnum::Struct(s)
         }
         ItemEnum::Enum(mut e) => {
-            e.variants = copy(&e.variants, target, memo, next_id);
-            e.impls = copy(&e.impls, target, memo, next_id);
+            e.variants = copy(&e.variants, target, memo, next_id, origins);
+            e.impls = copy(&e.impls, target, memo, next_id, origins);
             ItemEnum::Enum(e)
         }
         ItemEnum::Union(mut u) => {
-            u.fields = copy(&u.fields, target, memo, next_id);
-            u.impls = copy(&u.impls, target, memo, next_id);
+            u.fields = copy(&u.fields, target, memo, next_id, origins);
+            u.impls = copy(&u.impls, target, memo, next_id, origins);
             ItemEnum::Union(u)
         }
         ItemEnum::Variant(mut v) => {
-            v.kind = remap_variant_kind(v.kind, target, src, memo, next_id);
+            v.kind = remap_variant_kind(v.kind, target, src, memo, next_id, origins);
             ItemEnum::Variant(v)
         }
         ItemEnum::Trait(mut t) => {
-            t.items = copy(&t.items, target, memo, next_id);
-            t.implementations = copy(&t.implementations, target, memo, next_id);
+            t.items = copy(&t.items, target, memo, next_id, origins);
+            t.implementations = copy(&t.implementations, target, memo, next_id, origins);
             ItemEnum::Trait(t)
         }
         ItemEnum::Impl(mut im) => {
-            im.items = copy(&im.items, target, memo, next_id);
+            im.items = copy(&im.items, target, memo, next_id, origins);
             ItemEnum::Impl(im)
         }
         other => other,
@@ -196,13 +223,14 @@ fn remap_struct_kind(
     src: &Crate,
     memo: &mut HashMap<Id, Id>,
     next_id: &mut u32,
+    origins: &mut HashMap<Id, ReexportOrigin>,
 ) -> StructKind {
     match kind {
         StructKind::Unit => StructKind::Unit,
         StructKind::Tuple(fields) => StructKind::Tuple(
             fields
                 .into_iter()
-                .map(|f| f.and_then(|id| copy_item(target, src, id, memo, next_id)))
+                .map(|f| f.and_then(|id| copy_item(target, src, id, memo, next_id, origins)))
                 .collect(),
         ),
         StructKind::Plain {
@@ -211,7 +239,7 @@ fn remap_struct_kind(
         } => StructKind::Plain {
             fields: fields
                 .iter()
-                .filter_map(|&id| copy_item(target, src, id, memo, next_id))
+                .filter_map(|&id| copy_item(target, src, id, memo, next_id, origins))
                 .collect(),
             has_stripped_fields,
         },
@@ -224,13 +252,14 @@ fn remap_variant_kind(
     src: &Crate,
     memo: &mut HashMap<Id, Id>,
     next_id: &mut u32,
+    origins: &mut HashMap<Id, ReexportOrigin>,
 ) -> VariantKind {
     match kind {
         VariantKind::Plain => VariantKind::Plain,
         VariantKind::Tuple(fields) => VariantKind::Tuple(
             fields
                 .into_iter()
-                .map(|f| f.and_then(|id| copy_item(target, src, id, memo, next_id)))
+                .map(|f| f.and_then(|id| copy_item(target, src, id, memo, next_id, origins)))
                 .collect(),
         ),
         VariantKind::Struct {
@@ -239,7 +268,7 @@ fn remap_variant_kind(
         } => VariantKind::Struct {
             fields: fields
                 .iter()
-                .filter_map(|&id| copy_item(target, src, id, memo, next_id))
+                .filter_map(|&id| copy_item(target, src, id, memo, next_id, origins))
                 .collect(),
             has_stripped_fields,
         },
@@ -288,6 +317,21 @@ mod tests {
             },
         );
         facade
+    }
+
+    #[test]
+    fn records_origin_for_inlined_item() {
+        let mut facade = facade_crate();
+        let refs = HashMap::from([("dep".to_string(), dep_crate())]);
+
+        let origins = inline_reexports(&mut facade, &refs);
+
+        // The inlined Widget should carry its dependency-side path.
+        let note = origins
+            .values()
+            .find(|o| o.path == vec!["dep".to_string(), "Widget".to_string()]);
+        assert!(note.is_some(), "expected an origin for dep::Widget");
+        assert_eq!(note.unwrap().display(), "dep::Widget");
     }
 
     #[test]

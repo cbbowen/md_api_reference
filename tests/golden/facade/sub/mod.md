@@ -1,5 +1,7 @@
 # Module `facade::sub`
 
+_Reexported from_ `dep::sub`.
+
 _Defined at_ `src/lib.rs:24`
 
 ## Types

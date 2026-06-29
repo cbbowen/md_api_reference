@@ -79,6 +79,14 @@ impl Ctx<'_> {
     fn classify(&self, item: &Item) -> DocKind {
         DocKind::of(&item.inner)
     }
+
+    /// A `_Reexported from_` annotation for items inlined from an external
+    /// dependency, or `None` for native items (including those reexported from a
+    /// private module of this crate).
+    pub fn reexport_note(&self, id: Id) -> Option<String> {
+        let origin = self.model.origins.get(&id)?;
+        Some(format!("_Reexported from_ `{}`.", origin.display()))
+    }
 }
 
 /// Compute a relative markdown link from file `from` to file `to`, both given as
