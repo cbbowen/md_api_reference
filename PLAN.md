@@ -3,6 +3,15 @@
 This plan implements the spec in [GOALS.md](GOALS.md). It is organized as a dependency
 pipeline and delivered in phases that each leave the tool buildable and testable.
 
+## Status
+
+All phases implemented. Phase 5 (`--reexport-crate`) works via cross-crate inlining
+but may be revisited (type-reference cross-links and inlined-item source paths are
+noted refinements). The tool runs end to end: `--crate <spec> --out <dir>` writes the
+full markdown tree. Verified by 47 unit tests plus a hermetic golden E2E test
+(`tests/golden.rs`) that renders a committed JSON fixture and diffs against
+`tests/golden/`. Regenerate goldens with `BLESS=1 cargo test --test golden`.
+
 ## Pipeline overview
 
 ```
@@ -112,13 +121,25 @@ output.rs          --out empty check, dir creation, file writing
 - Golden output under `tests/golden/`; a test runs the pipeline and diffs (deterministic
   output makes this stable). Consider `insta` for ergonomics.
 
-## Open questions to settle during implementation
+## Open questions — resolved
 
-1. **Source-link target format.** GOALS says "crate-relative source code link" with a line
-   number. Concretely: a relative path to the source file (`src/foo.rs#L12`) rendered from
-   each `.md`, or plain text (`src/foo.rs:12`)? rustdoc gives `Item.span` (filename + lines);
-   need to confirm the filename base for both local and docs.rs JSON. **Decide in Phase 3.**
-2. **Doc-comment rewriting robustness.** Whether the line-based transform suffices or we need
-   `pulldown-cmark`. **Revisit in Phase 3.**
-3. **HTTP client / TLS.** `ureq` + rustls assumed; confirm it builds cleanly on Windows.
+1. **Source-link target format.** Resolved: plain `src/foo.rs:12` as inline code, no
+   hyperlink (always valid, deterministic). `Item.span.filename` is crate-relative for both
+   local and docs.rs JSON; backslashes are normalized to `/`.
+2. **Doc-comment rewriting robustness.** Resolved (for now): the line-based transform
+   (heading shift, hidden-doctest strip) plus reference-style link definitions for intra-doc
+   links is sufficient — verified by the golden fixture's `[Shape]`/`[greet]` links. Escalate
+   to `pulldown-cmark` only if a real crate breaks it.
+3. **HTTP client / TLS.** Resolved: `ureq` 3 + rustls builds and runs cleanly on Windows;
+   docs.rs serves zstd-compressed JSON, decompressed with `ruzstd`.
+
+## Discovered during implementation
+
+- **docs.rs serves zstd**, not raw JSON (`application/zstd`); handled via `ruzstd`.
+- **`format_version` is unstable across crates/toolchains**; the pinned `rustdoc-types` must
+  match the nightly used for local generation (see GOALS "Rustdoc JSON / Parsing"). Some
+  docs.rs crates lag and will not parse — expected, reported clearly.
+- **`#[doc(hidden)]` items are stripped by rustdoc**, so no active filtering is needed.
+- **Cross-crate reexports** appear only in the primary crate's `paths`/`external_crates`,
+  not its `index`; resolved by inlining the dependency's subgraph (Phase 5).
 ```
