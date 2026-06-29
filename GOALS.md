@@ -126,6 +126,10 @@ Parsing is accomplished using:
 
 The tool checks the `format_version` field of incoming JSON against the version supported by the pinned `rustdoc-types` and fails with a clear error on mismatch (this is the most likely failure mode for JSON downloaded from docs.rs, which may have been produced by a different toolchain).
 
+`format_version` is **not stable** and is tied to the exact nightly that produced the JSON, so a single pinned `rustdoc-types` cannot read every crate:
+* **Local generation** must use a nightly toolchain whose `format_version` matches the pinned `rustdoc-types`. Currently `rustdoc-types` 0.59 ⇒ `format_version` 59, which is emitted by nightly `1.98.0` (2026-06-28) or newer. Keep the toolchain and the pin in lockstep when bumping either.
+* **docs.rs downloads** only parse when that crate's most recent docs.rs build used a compatible nightly. Recently-rebuilt crates tend to match the latest `format_version`; long-stable crates may lag (e.g. observed `serde` latest at 57 while `anyhow` was at 59). A mismatch here is expected and reported, not a bug.
+
 ## Output directory
 
 The `--out` directory is created if it does not exist. If it already exists and is non-empty, the tool emits an error rather than writing into or overwriting it.
